@@ -137,6 +137,11 @@ export interface AppState {
   view: 'home' | 'board' | 'reports' | 'today'
   searchOpen: boolean
   settingsOpen: boolean
+  createListOpen: boolean
+  blitz: {
+    active: boolean
+    taskId: string | null
+  }
 
   // Actions — tasks
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void
@@ -169,6 +174,9 @@ export interface AppState {
   openList: (listId: string) => void
   setSearchOpen: (open: boolean) => void
   setSettingsOpen: (open: boolean) => void
+  setCreateListOpen: (open: boolean) => void
+  startBlitz: (taskId: string) => void
+  stopBlitz: () => void
 }
 
 // ─────────────────────────────────────────────
@@ -178,6 +186,9 @@ export interface AppState {
 export interface ElectronAPI {
   getTheme: () => Promise<'dark' | 'light'>
   openExternal: (url: string) => void
+  tray: {
+    update: (taskName?: string, elapsed?: string) => void
+  }
   store: {
     get: (key: string) => Promise<unknown>
     set: (key: string, value: unknown) => Promise<void>
@@ -199,6 +210,9 @@ export interface ElectronAPI {
   }
   getTheme: () => Promise<'dark' | 'light'>
   openExternal: (url: string) => void
+  tray: {
+    update: (taskName?: string, elapsed?: string) => void
+  }
   window: {
     minimize:       () => void
     close:          () => void

@@ -9,7 +9,9 @@ interface Props {
 export default function AddTaskInput({ listId, status = 'today' }: Props) {
   const [active, setActive] = useState(false)
   const [title, setTitle] = useState('')
-  const { addTask } = useStore()
+  const { addTask, setCreateListOpen, setView } = useStore()
+
+  const hasList = Boolean(listId)
 
   const submit = () => {
     const trimmed = title.trim()
@@ -38,7 +40,14 @@ export default function AddTaskInput({ listId, status = 'today' }: Props) {
   if (!active) {
     return (
       <button
-        onClick={() => setActive(true)}
+        onClick={() => {
+          if (!hasList) {
+            setView('home')
+            setCreateListOpen(true)
+            return
+          }
+          setActive(true)
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -56,13 +65,14 @@ export default function AddTaskInput({ listId, status = 'today' }: Props) {
         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
       >
         <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
-        ADD TASK
+        {hasList ? 'ADD TASK' : 'CREATE A LIST FIRST'}
       </button>
     )
   }
 
   return (
     <div
+      className="titlebar-no-drag"
       style={{
         background: 'var(--bg-card)',
         borderRadius: 'var(--radius-md)',
@@ -72,9 +82,11 @@ export default function AddTaskInput({ listId, status = 'today' }: Props) {
       }}
     >
       <input
+        className="titlebar-no-drag"
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Enter') submit()
           if (e.key === 'Escape') { setTitle(''); setActive(false) }

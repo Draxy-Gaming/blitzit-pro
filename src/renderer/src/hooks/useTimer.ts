@@ -98,14 +98,12 @@ export function useTraySync(activeTask: import('../types').Task | null) {
   } as import('../types').Task)
 
   useEffect(() => {
-    if (!window.electron?.store) return // not in Electron
+    if (!window.electron?.tray) return
     try {
-      const ipc = (window as any).electronIpc
-      if (!ipc) return
       if (activeTask?.timerStartedAt) {
-        ipc.send?.('tray:update', activeTask.title, formatTime(liveSeconds))
+        window.electron.tray.update(activeTask.title, formatTime(liveSeconds))
       } else {
-        ipc.send?.('tray:update', undefined, undefined)
+        window.electron.tray.update(undefined, undefined)
       }
     } catch {}
   }, [activeTask?.id, activeTask?.timerStartedAt, liveSeconds])

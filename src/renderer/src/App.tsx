@@ -9,14 +9,17 @@ import AlertsPopup   from './components/Scheduling/AlertsPopup'
 import ReportsView   from './components/Reports'
 import Onboarding    from './components/Onboarding'
 import { useKeyboard } from './hooks/useKeyboard'
+import { useActiveTask, useTraySync } from './hooks/useTimer'
 
 export default function App() {
   const { settings, view, searchOpen, settingsOpen } = useStore()
   const [onboarded, setOnboarded] = useState(() => {
     try { return localStorage.getItem('blitzit-onboarded') === '1' } catch { return false }
   })
+  const activeTask = useActiveTask()
 
   useKeyboard()
+  useTraySync(activeTask)
 
   useEffect(() => {
     const root   = document.documentElement
@@ -30,10 +33,26 @@ export default function App() {
     return () => mq.removeEventListener('change', h)
   }, [settings.theme])
 
+  useEffect(() => {
+    const compact = onboarded && view === 'today'
+
+    window.electron?.window?.setCompact(compact).catch(() => {})
+    window.electron?.window?.setAlwaysOnTop(compact).catch(() => {})
+    window.dispatchEvent(new Event('blitzit:window-sync'))
+  }, [onboarded, view])
+
+  const finishOnboarding = () => {
+    try { localStorage.setItem('blitzit-onboarded', '1') } catch {}
+    setOnboarded(true)
+    useStore.getState().setView('today')
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
-      {view === 'board'   ? <BoardView />
-        : view === 'home'  ? <HomeView />
+      {!onboarded ? (
+        <Onboarding onDone={finishOnboarding} />
+      ) : view === 'board' ? <BoardView />
+        : view === 'home' ? <HomeView />
         : view === 'reports' ? <ReportsView />
         : <TodayPanel />}
 

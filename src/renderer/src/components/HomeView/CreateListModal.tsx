@@ -38,6 +38,7 @@ export default function CreateListModal({ onClose }: Props) {
       onClick={onClose}
     >
       <div
+        className="titlebar-no-drag"
         style={{
           background: '#1e1e1e',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -58,9 +59,11 @@ export default function CreateListModal({ onClose }: Props) {
             Name
           </label>
           <input
+            className="titlebar-no-drag"
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose() }}
             placeholder="e.g. Work, Personal, Side project..."
             style={{
@@ -80,9 +83,11 @@ export default function CreateListModal({ onClose }: Props) {
             Icon (1-2 characters, optional)
           </label>
           <input
+            className="titlebar-no-drag"
             value={icon}
             maxLength={2}
             onChange={(e) => setIcon(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
             placeholder={name ? name[0]?.toUpperCase() : 'A'}
             style={{
               width: 60, padding: '9px 12px',

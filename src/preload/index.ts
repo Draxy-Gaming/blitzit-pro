@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('electron', {
   // ── External links ────────────────────────────────
   openExternal: (url: string) => ipcRenderer.send('open-external', url),
 
+  tray: {
+    update: (taskName?: string, elapsed?: string) => ipcRenderer.send('tray:update', taskName, elapsed)
+  },
+
   // ── Window controls ───────────────────────────────
   window: {
     minimize:        ()               => ipcRenderer.send('window:minimize'),

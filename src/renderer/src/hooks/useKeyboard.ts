@@ -17,6 +17,8 @@ export function useKeyboard() {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
       const inInput = tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable
 
+      if (inInput && e.key !== 'Escape') return
+
       const meta = e.metaKey || e.ctrlKey
 
       // ⌘F — search
@@ -41,7 +43,7 @@ export function useKeyboard() {
       }
 
       // ⌘1/2/3 — view switching
-      if (meta && e.key === '1') { e.preventDefault(); useStore.getState().setView('home');    return }
+      if (meta && e.key === '1') { e.preventDefault(); useStore.getState().setView('today');   return }
       if (meta && e.key === '2') { e.preventDefault(); useStore.getState().setView('board');   return }
       if (meta && e.key === '3') { e.preventDefault(); useStore.getState().setView('reports'); return }
 
@@ -66,9 +68,9 @@ export function useKeyboard() {
         const state = useStore.getState()
         if (state.searchOpen)   { state.setSearchOpen(false);   return }
         if (state.settingsOpen) { state.setSettingsOpen(false); return }
-        // Go back from board/reports to home
+        // Go back from board/reports to today
         if (state.view === 'board' || state.view === 'reports') {
-          state.setView('home')
+          state.setView('today')
           return
         }
       }

@@ -43,9 +43,11 @@ export default function Onboarding({ onDone }: Props) {
       // Save name, mark onboarded
       if (name.trim()) updateSettings({ userName: name.trim() })
       updateSettings({ theme: 'dark' })
-      // Create a sample list
-      addList({ name: 'Work', color: '#7F77DD', iconChar: 'W', archived: false, sortOrder: 0 })
-      addList({ name: 'Personal', color: '#1D9E75', iconChar: 'P', archived: false, sortOrder: 1 })
+      // Create starter lists once
+      const hasWorkList = useStore.getState().lists.some((list) => list.name.toLowerCase() === 'work')
+      const hasPersonalList = useStore.getState().lists.some((list) => list.name.toLowerCase() === 'personal')
+      if (!hasWorkList) addList({ name: 'Work', color: '#7F77DD', iconChar: 'W', archived: false, sortOrder: 0 })
+      if (!hasPersonalList) addList({ name: 'Personal', color: '#1D9E75', iconChar: 'P', archived: false, sortOrder: 1 })
       onDone()
     } else {
       setStep((s) => s + 1)

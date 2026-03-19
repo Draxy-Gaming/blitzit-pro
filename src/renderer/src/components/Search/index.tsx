@@ -3,7 +3,7 @@ import { useStore } from '../../store'
 import type { Task, TaskList } from '../../types'
 
 export default function GlobalSearch() {
-  const { tasks, lists, setSearchOpen, openList, addTask, setView } = useStore()
+  const { tasks, lists, setSearchOpen, openList, addTask, setView, setCreateListOpen } = useStore()
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -102,7 +102,11 @@ export default function GlobalSearch() {
           flexWrap: 'wrap'
         }}>
           <QA label="Add new task" hint={query.trim() ? `"${query.trim().slice(0,20)}"` : ''} onClick={handleAddTask}/>
-          <QA label="Add new list" onClick={() => { setView('home'); setSearchOpen(false) }}/>
+          <QA label="Add new list" onClick={() => {
+            setView('home')
+            setCreateListOpen(true)
+            setSearchOpen(false)
+          }}/>
           <QA label="Go to Reports" onClick={() => { setView('reports'); setSearchOpen(false) }}/>
         </div>
 

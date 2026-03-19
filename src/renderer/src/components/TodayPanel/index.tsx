@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useStore, selectActiveLists } from '../../store'
 import { formatMinutes } from '../../hooks/useTimer'
 import ActiveTaskCard from './ActiveTaskCard'
@@ -23,18 +23,19 @@ export default function TodayPanel() {
     completeTask,
     setView,
     setSettingsOpen,
-    openList
+    openList,
+    blitz,
+    startBlitz,
+    stopBlitz
   } = useStore()
 
   const allLists = useStore(selectActiveLists)
   const { alwaysOnTop, toggleAlwaysOnTop } = useWindowControls()
 
-  const [mode, setMode] = useState<PanelMode>('list')
+  const [panelMode, setPanelMode] = useState<PanelMode>('list')
   const [justCompletedTask, setJustCompletedTask] = useState<Task | null>(null)
   const [selectedListId, setSelectedListId] = useState<string | 'all'>('all')
   const [showListDropdown, setShowListDropdown] = useState(false)
-  const [blitzActive, setBlitzActive] = useState(false)
-  const [blitzStartTaskId, setBlitzStartTaskId] = useState<string | null>(null)
 
   // Determine which list is "current"
   const currentList = allLists.find((l) => l.id === selectedListId)
@@ -75,11 +76,19 @@ export default function TodayPanel() {
 
   const activeTask = tasks.find((t) => t.id === activeTaskId) ?? null
 
+  useEffect(() => {
+    if (blitz.active && blitz.taskId) {
+      setPanelMode('blitz')
+    } else if (panelMode === 'blitz') {
+      setPanelMode('list')
+    }
+  }, [blitz.active, blitz.taskId])
+
   // ── Handlers ──────────────────────────────
 
   const handleStartTask = (taskId: string) => {
     startTimer(taskId)
-    setMode('list')
+    setPanelMode('list')
   }
 
   const handlePauseActive = () => {
@@ -92,12 +101,12 @@ export default function TodayPanel() {
     completeTask(activeTaskId)
     if (settings.celebration.showSuccessScreen) {
       setJustCompletedTask(snapshot)
-      setMode('celebrating')
+      setPanelMode('celebrating')
     }
   }
 
   const handleNextTask = () => {
-    setMode('list')
+    setPanelMode('list')
     setJustCompletedTask(null)
     // Auto-start the next pending task if any
     const next = todayTasks.find((t) => t.id !== activeTaskId && t.status === 'today')
@@ -105,7 +114,19 @@ export default function TodayPanel() {
   }
 
   const handleBreak = () => {
-    setMode('break')
+    setPanelMode('break')
+  }
+
+  const exitBlitz = () => {
+    setPanelMode('list')
+    stopBlitz()
+  }
+
+  const expandBlitz = () => {
+    const currentTaskId = blitz.taskId ?? activeTask?.id
+    if (currentTaskId) startBlitz(currentTaskId)
+    if (selectedListId !== 'all') openList(selectedListId)
+    else setView('board')
   }
 
   // ── Render ─────────────────────────────────
@@ -242,9 +263,8 @@ export default function TodayPanel() {
               <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             </svg>
           </IconBtn>
-          <IconBtn title="Go to board" onClick={() => {
-            if (selectedListId !== 'all') openList(selectedListId)
-            else setView('home')
+          <IconBtn title="Go home" onClick={() => {
+            setView('home')
           }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.3"/>
@@ -252,7 +272,10 @@ export default function TodayPanel() {
               <line x1="10.5" y1="1" x2="10.5" y2="15" stroke="currentColor" strokeWidth="1.3"/>
             </svg>
           </IconBtn>
-          <IconBtn title="Expand" onClick={() => setView('board')}>
+          <IconBtn title="Expand" onClick={() => {
+            if (selectedListId !== 'all') openList(selectedListId)
+            else setView('board')
+          }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M9.5 2.5H13.5V6.5M6.5 13.5H2.5V9.5M13.5 2.5L9 8M2.5 13.5L7 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -300,21 +323,19 @@ export default function TodayPanel() {
         onClick={() => setShowListDropdown(false)}
       >
         {/* ── Blitz Mode active ── */}
-        {blitzActive && blitzStartTaskId ? (
+        {panelMode === 'blitz' && blitz.active && blitz.taskId ? (
           <BlitzMode
-            initialTaskId={blitzStartTaskId}
-            onExit={() => {
-              setBlitzActive(false)
-              setBlitzStartTaskId(null)
-            }}
+            initialTaskId={blitz.taskId}
+            onExpand={expandBlitz}
+            onExit={exitBlitz}
           />
-        ) : mode === 'celebrating' && justCompletedTask ? (
+        ) : panelMode === 'celebrating' && justCompletedTask ? (
           <CelebrationScreen
             task={justCompletedTask}
             onNextTask={handleNextTask}
             onBreak={handleBreak}
           />
-        ) : mode === 'break' ? (
+        ) : panelMode === 'break' ? (
           <BreakCard onDone={handleNextTask} />
         ) : (
           <>
@@ -365,8 +386,8 @@ export default function TodayPanel() {
                 onClick={() => {
                   const firstTask = activeTask ?? todayTasks[0]
                   if (!firstTask) return
-                  setBlitzStartTaskId(firstTask.id)
-                  setBlitzActive(true)
+                  startBlitz(firstTask.id)
+                  setPanelMode('blitz')
                 }}
               />
             )}

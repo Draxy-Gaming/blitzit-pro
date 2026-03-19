@@ -11,12 +11,25 @@ import Onboarding    from './components/Onboarding'
 import { useKeyboard } from './hooks/useKeyboard'
 
 export default function App() {
-  const { settings, view, searchOpen, settingsOpen } = useStore()
+  const { settings, view, searchOpen, settingsOpen, setView } = useStore()
   const [onboarded, setOnboarded] = useState(() => {
     try { return localStorage.getItem('blitzit-onboarded') === '1' } catch { return false }
   })
 
   useKeyboard()
+
+  useEffect(() => {
+    let cancelled = false
+
+    window.electron?.window?.getCompact().then((isCompact) => {
+      if (cancelled || !isCompact || view === 'today') return
+      setView('today')
+    }).catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [setView, view])
 
   useEffect(() => {
     const root   = document.documentElement

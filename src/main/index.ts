@@ -16,17 +16,18 @@ if (process.platform === 'win32') {
 let mainWindow: BrowserWindow | null = null
 
 function createMainWindow(): BrowserWindow {
+  const compactMode = store.get('compactMode', false)
   const savedBounds = store.get('windowBounds') as {
     x?: number; y?: number; width?: number; height?: number
   } | undefined
 
   const win = new BrowserWindow({
-    width:     savedBounds?.width  ?? 440,
-    height:    savedBounds?.height ?? 720,
+    width:     compactMode ? 380 : (savedBounds?.width  ?? 1100),
+    height:    compactMode ? 620 : (savedBounds?.height ?? 720),
     x:         savedBounds?.x,
     y:         savedBounds?.y,
-    minWidth:  360,
-    minHeight: 500,
+    minWidth:  compactMode ? 360 : 900,
+    minHeight: compactMode ? 500 : 600,
     show: false,
     autoHideMenuBar: true,
     // macOS: hide traffic lights area, keep native feel
@@ -42,6 +43,8 @@ function createMainWindow(): BrowserWindow {
       nodeIntegration: false
     }
   })
+
+  win.setResizable(!compactMode)
 
   // On Windows, hide the default menu bar entirely
   if (process.platform === 'win32') {
@@ -147,7 +150,7 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('window:getCompact', () => store.get('compactMode', false))
 
-  if (store.get('alwaysOnTop', false)) {
+  if (store.get('alwaysOnTop', false) || store.get('compactMode', false)) {
     mainWindow.setAlwaysOnTop(true, 'floating')
     mainWindow.setVisibleOnAllWorkspaces(true)
   }

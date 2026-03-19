@@ -27,7 +27,7 @@ export default function TodayPanel() {
   } = useStore()
 
   const allLists = useStore(selectActiveLists)
-  const { alwaysOnTop, toggleAlwaysOnTop } = useWindowControls()
+  const { alwaysOnTop, toggleAlwaysOnTop, setAlwaysOnTop, setCompact } = useWindowControls()
 
   const [mode, setMode] = useState<PanelMode>('list')
   const [justCompletedTask, setJustCompletedTask] = useState<Task | null>(null)
@@ -252,7 +252,11 @@ export default function TodayPanel() {
               <line x1="10.5" y1="1" x2="10.5" y2="15" stroke="currentColor" strokeWidth="1.3"/>
             </svg>
           </IconBtn>
-          <IconBtn title="Expand" onClick={() => setView('board')}>
+          <IconBtn title="Expand" onClick={async () => {
+            await setCompact(false)
+            await setAlwaysOnTop(false)
+            setView('board')
+          }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M9.5 2.5H13.5V6.5M6.5 13.5H2.5V9.5M13.5 2.5L9 8M2.5 13.5L7 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -362,9 +366,11 @@ export default function TodayPanel() {
             {/* Blitzit now button — fixed at the bottom when there are tasks */}
             {todayTasks.length > 0 && (
               <BlitzNowButton
-                onClick={() => {
+                onClick={async () => {
                   const firstTask = activeTask ?? todayTasks[0]
                   if (!firstTask) return
+                  await setCompact(true)
+                  await setAlwaysOnTop(true)
                   setBlitzStartTaskId(firstTask.id)
                   setBlitzActive(true)
                 }}

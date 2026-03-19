@@ -14,20 +14,35 @@ export function useWindowControls() {
     window.electron?.window?.getCompact().then(setCompactState).catch(() => {})
   }, [])
 
+  const setAlwaysOnTop = async (value: boolean) => {
+    setAlwaysOnTopState(value)
+    await window.electron?.window?.setAlwaysOnTop(value).catch(() => {})
+  }
+
   const toggleAlwaysOnTop = async () => {
-    const next = !alwaysOnTop
-    setAlwaysOnTopState(next)
-    await window.electron?.window?.setAlwaysOnTop(next).catch(() => {})
+    await setAlwaysOnTop(!alwaysOnTop)
+  }
+
+  const setCompact = async (value: boolean) => {
+    setCompactState(value)
+    await window.electron?.window?.setCompact(value).catch(() => {})
   }
 
   const toggleCompact = async () => {
-    const next = !compact
-    setCompactState(next)
-    await window.electron?.window?.setCompact(next).catch(() => {})
+    await setCompact(!compact)
   }
 
   const minimize = () => window.electron?.window?.minimize()
   const close    = () => window.electron?.window?.close()
 
-  return { alwaysOnTop, toggleAlwaysOnTop, compact, toggleCompact, minimize, close }
+  return {
+    alwaysOnTop,
+    setAlwaysOnTop,
+    toggleAlwaysOnTop,
+    compact,
+    setCompact,
+    toggleCompact,
+    minimize,
+    close
+  }
 }

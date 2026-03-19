@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore, selectActiveLists, selectArchivedLists } from '../../store'
+import { useWindowControls } from '../../hooks/useWindow'
 import ListCard from './ListCard'
 import CreateListModal from './CreateListModal'
 
@@ -7,6 +8,7 @@ export default function HomeView() {
   const { tasks, settings, openList, setView, setSearchOpen, setSettingsOpen } = useStore()
   const activeLists   = useStore(selectActiveLists)
   const archivedLists = useStore(selectArchivedLists)
+  const { setCompact, setAlwaysOnTop } = useWindowControls()
   const [showCreateModal,   setShowCreateModal]   = useState(false)
   const [showArchived,      setShowArchived]      = useState(false)
 
@@ -82,7 +84,11 @@ export default function HomeView() {
               <path d="M7 1v1.3M7 11.7V13M1 7h1.3M11.7 7H13M2.7 2.7l.9.9M10.4 10.4l.9.9M2.7 11.3l.9-.9M10.4 3.6l.9-.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </NavBtn>
-          <NavBtn title="Today panel" onClick={() => setView('home')}>
+          <NavBtn title="Today panel" onClick={async () => {
+            await setCompact(true)
+            await setAlwaysOnTop(true)
+            setView('today')
+          }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect x="1.5" y="1.5" width="11" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.2"/>
               <line x1="1.5" y1="5.5" x2="12.5" y2="5.5" stroke="currentColor" strokeWidth="1.2"/>
@@ -213,8 +219,9 @@ export default function HomeView() {
         {/* Add new task CTA */}
         <button
           onClick={() => {
-            // Open today panel and focus add task
-            setView('home')
+            void setCompact(true)
+            void setAlwaysOnTop(true)
+            setView('today')
           }}
           style={{
             display: 'flex', alignItems: 'center', gap: 7,

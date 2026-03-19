@@ -31,7 +31,7 @@ export default function BoardView() {
   } = useStore()
 
   const allLists      = useStore(selectActiveLists)
-  const { alwaysOnTop, toggleAlwaysOnTop } = useWindowControls()
+  const { alwaysOnTop, toggleAlwaysOnTop, setAlwaysOnTop, setCompact } = useWindowControls()
 
   const currentList = lists.find((l) => l.id === activeListId)
 
@@ -106,11 +106,13 @@ export default function BoardView() {
   }, [tasks, tasksByStatus, moveTask, updateTask])
 
   // ── Blitz handlers ─────────────────────────
-  const handleBlitzStart = () => {
+  const handleBlitzStart = async () => {
     const first = tasksByStatus.today[0] ?? tasksByStatus['this-week'][0]
     if (!first) return
-    setBlitzStartTaskId(first.id)
-    setBlitzActive(true)
+    await setCompact(true)
+    await setAlwaysOnTop(true)
+    startTimer(first.id)
+    setView('today')
   }
 
   // Board task count for header
@@ -215,7 +217,11 @@ export default function BoardView() {
               <path d="M7 1v1.3M7 11.7V13M1 7h1.3M11.7 7H13M2.7 2.7l.9.9M10.4 10.4l.9.9M2.7 11.3l.9-.9M10.4 3.6l.9-.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </TitlebarBtn>
-          <TitlebarBtn title="Compact view" onClick={() => setView('home')}>
+          <TitlebarBtn title="Compact view" onClick={async () => {
+            await setCompact(true)
+            await setAlwaysOnTop(true)
+            setView('today')
+          }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M8.5 1.5H12.5V5.5M5.5 12.5H1.5V8.5M12.5 1.5L8 6M1.5 12.5L6 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

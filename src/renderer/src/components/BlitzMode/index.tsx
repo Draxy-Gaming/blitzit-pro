@@ -6,6 +6,7 @@ import { playSound } from '../../hooks/useSounds'
 import ControlBar from './ControlBar'
 import NotesPanel from './NotesPanel'
 import CelebrationScreen from '../TodayPanel/CelebrationScreen'
+import ActiveTaskCard from '../TodayPanel/ActiveTaskCard'
 import type { Task } from '../../types'
 
 type BlitzPhase = 'working' | 'celebrating' | 'break'
@@ -13,6 +14,8 @@ type BlitzPhase = 'working' | 'celebrating' | 'break'
 interface Props {
   /** The first task to start with */
   initialTaskId: string
+  showTaskCard?: boolean
+  onExpand?: () => void
   onExit: () => void
 }
 
@@ -21,7 +24,7 @@ interface Props {
  * Manages the working → celebration → break → working loop.
  * Handles pomodoro, notes, auto-open links, sounds.
  */
-export default function BlitzMode({ initialTaskId, onExit }: Props) {
+export default function BlitzMode({ initialTaskId, showTaskCard = false, onExpand, onExit }: Props) {
   const {
     tasks, settings,
     startTimer, pauseTimer, stopTimer,
@@ -158,8 +161,16 @@ export default function BlitzMode({ initialTaskId, onExit }: Props) {
             onPause={handleTogglePause}
             onSkip={handleSkipTask}
             onDone={handleDone}
-            onExpand={onExit}
+            onExpand={onExpand ?? onExit}
           />
+
+          {showTaskCard && (
+            <ActiveTaskCard
+              task={currentTask}
+              onPause={handleTogglePause}
+              onDone={handleDone}
+            />
+          )}
 
           {/* Notes panel — slides in below control bar */}
           {showNotes && (

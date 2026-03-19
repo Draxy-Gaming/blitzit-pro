@@ -2,12 +2,15 @@ import { useState, useMemo } from 'react'
 import { useStore, selectActiveLists, selectArchivedLists } from '../../store'
 import ListCard from './ListCard'
 import CreateListModal from './CreateListModal'
+import { isMacOS } from '../../utils/platform'
 
 export default function HomeView() {
-  const { tasks, settings, openList, setView, setSearchOpen, setSettingsOpen } = useStore()
+  const {
+    tasks, settings, openList, setView, setSearchOpen, setSettingsOpen,
+    createListOpen, setCreateListOpen
+  } = useStore()
   const activeLists   = useStore(selectActiveLists)
   const archivedLists = useStore(selectArchivedLists)
-  const [showCreateModal,   setShowCreateModal]   = useState(false)
   const [showArchived,      setShowArchived]      = useState(false)
 
   // Greeting
@@ -45,7 +48,7 @@ export default function HomeView() {
           flexShrink: 0
         }}
       >
-        {process.platform === 'darwin' && <div style={{ width: 52 }} />}
+        {isMacOS && <div style={{ width: 52 }} />}
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -82,7 +85,7 @@ export default function HomeView() {
               <path d="M7 1v1.3M7 11.7V13M1 7h1.3M11.7 7H13M2.7 2.7l.9.9M10.4 10.4l.9.9M2.7 11.3l.9-.9M10.4 3.6l.9-.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </NavBtn>
-          <NavBtn title="Today panel" onClick={() => setView('home')}>
+          <NavBtn title="Today panel" onClick={() => setView('today')}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect x="1.5" y="1.5" width="11" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.2"/>
               <line x1="1.5" y1="5.5" x2="12.5" y2="5.5" stroke="currentColor" strokeWidth="1.2"/>
@@ -129,7 +132,7 @@ export default function HomeView() {
           marginBottom: 20
         }}>
           {/* Create new list card */}
-          <CreateCard onClick={() => setShowCreateModal(true)} />
+          <CreateCard onClick={() => setCreateListOpen(true)} />
 
           {/* List cards */}
           {activeLists.map((list) => {
@@ -214,7 +217,7 @@ export default function HomeView() {
         <button
           onClick={() => {
             // Open today panel and focus add task
-            setView('home')
+            setView('today')
           }}
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
@@ -260,7 +263,7 @@ export default function HomeView() {
       </div>
 
       {/* Create list modal */}
-      {showCreateModal && <CreateListModal onClose={() => setShowCreateModal(false)} />}
+      {createListOpen && <CreateListModal onClose={() => setCreateListOpen(false)} />}
     </div>
   )
 }

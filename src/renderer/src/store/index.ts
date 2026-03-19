@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist, type StateStorage } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type {
   AppState, Task, TaskList, TaskStatus,
   AppSettings, TimerSession
@@ -130,9 +130,14 @@ export const useStore = create<AppState>()(
       settings: defaultSettings,
       activeTaskId: null,
       activeListId: null,
-      view: 'home' as const,
+      view: 'today' as const,
       searchOpen: false,
       settingsOpen: false,
+      createListOpen: false,
+      blitz: {
+        active: false,
+        taskId: null
+      },
 
       // ── Tasks ──────────────────────────────
       addTask: (taskData) => {
@@ -255,10 +260,19 @@ export const useStore = create<AppState>()(
         set((s) => ({ lists: s.lists.map((l) => l.id === id ? { ...l, archived: true } : l) })),
 
       deleteList: (id) =>
-        set((s) => ({
-          lists: s.lists.filter((l) => l.id !== id),
-          tasks: s.tasks.filter((t) => t.listId !== id)
-        })),
+        set((s) => {
+          const removedTaskIds = new Set(s.tasks.filter((t) => t.listId === id).map((t) => t.id))
+          const activeTaskRemoved = s.activeTaskId ? removedTaskIds.has(s.activeTaskId) : false
+          const blitzTaskRemoved = s.blitz.taskId ? removedTaskIds.has(s.blitz.taskId) : false
+
+          return {
+            lists: s.lists.filter((l) => l.id !== id),
+            tasks: s.tasks.filter((t) => t.listId !== id),
+            activeListId: s.activeListId === id ? null : s.activeListId,
+            activeTaskId: activeTaskRemoved ? null : s.activeTaskId,
+            blitz: blitzTaskRemoved ? { active: false, taskId: null } : s.blitz
+          }
+        }),
 
       // ── Settings ───────────────────────────
       updateSettings: (updates) =>
@@ -268,11 +282,14 @@ export const useStore = create<AppState>()(
       setView:         (view)   => set({ view }),
       openList:        (listId) => set({ activeListId: listId, view: 'board' }),
       setSearchOpen:   (open)   => set({ searchOpen: open }),
-      setSettingsOpen: (open)   => set({ settingsOpen: open })
+      setSettingsOpen: (open)   => set({ settingsOpen: open }),
+      setCreateListOpen: (open) => set({ createListOpen: open }),
+      startBlitz: (taskId) => set({ blitz: { active: true, taskId } }),
+      stopBlitz: () => set({ blitz: { active: false, taskId: null } })
     }),
     {
       name: 'blitzit-storage',
-      storage: electronStorage
+      storage: createJSONStorage(() => electronStorage)
     }
   )
 )

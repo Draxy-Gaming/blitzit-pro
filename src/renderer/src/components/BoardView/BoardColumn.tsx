@@ -36,7 +36,7 @@ export default function BoardColumn({
   status, label, tasks, doneTasks = [],
   activeTaskId, onCardStart, onContextMenu, onBlitzNow, showBlitzBtn
 }: Props) {
-  const { addTask, activeListId, lists } = useStore()
+  const { addTask, activeListId, lists, setCreateListOpen } = useStore()
   const [addingTask, setAddingTask] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
 
@@ -67,6 +67,12 @@ export default function BoardColumn({
     const trimmed = newTaskTitle.trim()
     if (trimmed) {
       const listId = activeListId ?? lists.find(l => !l.archived)?.id ?? ''
+      if (!listId) {
+        setCreateListOpen(true)
+        setNewTaskTitle('')
+        setAddingTask(false)
+        return
+      }
       addTask({
         title: trimmed, status,
         listId,
@@ -123,7 +129,13 @@ export default function BoardColumn({
             )}
             {!isDoneCol && (
               <button
-                onClick={() => setAddingTask(true)}
+                onClick={() => {
+                  if (!activeListId && !lists.find((list) => !list.archived)) {
+                    setCreateListOpen(true)
+                    return
+                  }
+                  setAddingTask(true)
+                }}
                 style={{
                   width: 20, height: 20,
                   borderRadius: 5,
@@ -235,15 +247,18 @@ export default function BoardColumn({
         {/* Inline add task input */}
         {addingTask ? (
           <div style={{
+            WebkitAppRegion: 'no-drag',
             background: '#1e1e1e',
             border: '1px solid rgba(29,158,117,0.5)',
             borderRadius: 9,
             padding: '8px 10px'
           }}>
             <input
+              className="titlebar-no-drag"
               autoFocus
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') submitNewTask()
                 if (e.key === 'Escape') { setNewTaskTitle(''); setAddingTask(false) }

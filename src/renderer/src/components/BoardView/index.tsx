@@ -7,6 +7,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { useStore, selectActiveLists } from '../../store'
 import { useWindowControls } from '../../hooks/useWindow'
+import { isMacOS } from '../../utils/platform'
 import BlitzMode from '../BlitzMode'
 import BoardColumn from './BoardColumn'
 import BoardTaskCard from './BoardTaskCard'
@@ -27,7 +28,8 @@ export default function BoardView() {
     tasks, lists, settings,
     activeTaskId, activeListId,
     startTimer, moveTask, updateTask,
-    setView, setSettingsOpen
+    setView, setSettingsOpen,
+    blitz, startBlitz, stopBlitz
   } = useStore()
 
   const allLists      = useStore(selectActiveLists)
@@ -35,8 +37,6 @@ export default function BoardView() {
 
   const currentList = lists.find((l) => l.id === activeListId)
 
-  const [blitzActive,      setBlitzActive]      = useState(false)
-  const [blitzStartTaskId, setBlitzStartTaskId] = useState<string | null>(null)
   const [contextMenu,      setContextMenu]      = useState<ContextMenuState | null>(null)
   const [draggingTask,     setDraggingTask]     = useState<Task | null>(null)
 
@@ -109,8 +109,7 @@ export default function BoardView() {
   const handleBlitzStart = () => {
     const first = tasksByStatus.today[0] ?? tasksByStatus['this-week'][0]
     if (!first) return
-    setBlitzStartTaskId(first.id)
-    setBlitzActive(true)
+    startBlitz(first.id)
   }
 
   // Board task count for header
@@ -144,7 +143,7 @@ export default function BoardView() {
         }}
       >
         {/* macOS traffic lights space */}
-        {process.platform === 'darwin' && <div style={{ width: 52 }} />}
+        {isMacOS && <div style={{ width: 52 }} />}
 
         {/* Back button */}
         <button
@@ -215,7 +214,7 @@ export default function BoardView() {
               <path d="M7 1v1.3M7 11.7V13M1 7h1.3M11.7 7H13M2.7 2.7l.9.9M10.4 10.4l.9.9M2.7 11.3l.9-.9M10.4 3.6l.9-.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </TitlebarBtn>
-          <TitlebarBtn title="Compact view" onClick={() => setView('home')}>
+          <TitlebarBtn title="Compact view" onClick={() => setView('today')}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M8.5 1.5H12.5V5.5M5.5 12.5H1.5V8.5M12.5 1.5L8 6M1.5 12.5L6 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -224,19 +223,37 @@ export default function BoardView() {
       </div>
 
       {/* ── Board columns ── */}
-      {blitzActive && blitzStartTaskId ? (
+      {blitz.active && blitz.taskId ? (
         // Blitz overlay over the board
         <div style={{
           position: 'absolute', inset: 44,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(4,6,10,0.58)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          padding: '56px 24px 24px',
           zIndex: 100
         }}>
-          <div style={{ width: 380, background: '#141414', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{
+            width: 460,
+            maxWidth: '100%',
+            background: 'linear-gradient(180deg, rgba(24,24,24,0.98), rgba(15,15,15,0.98))',
+            borderRadius: 20,
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ padding: '16px 18px 0' }}>
+              <div style={{ fontSize: 12, color: 'var(--accent-teal)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Blitz Mode
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4, marginBottom: 12 }}>
+                Stay focused on the current task while the board stays visible in the background.
+              </div>
+            </div>
             <BlitzMode
-              initialTaskId={blitzStartTaskId}
-              onExit={() => { setBlitzActive(false); setBlitzStartTaskId(null) }}
+              initialTaskId={blitz.taskId}
+              showTaskCard
+              onExit={stopBlitz}
             />
           </div>
         </div>

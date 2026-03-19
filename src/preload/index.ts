@@ -1,5 +1,31 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+window.addEventListener('error', (event) => {
+  ipcRenderer.send('renderer:error', {
+    type: 'error',
+    message: event.message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    stack: event.error instanceof Error ? event.error.stack : undefined
+  })
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason =
+    event.reason instanceof Error
+      ? {
+          message: event.reason.message,
+          stack: event.reason.stack
+        }
+      : { message: String(event.reason) }
+
+  ipcRenderer.send('renderer:error', {
+    type: 'unhandledrejection',
+    ...reason
+  })
+})
+
 contextBridge.exposeInMainWorld('electron', {
   // ── electron-store ────────────────────────────────
   store: {
@@ -16,6 +42,10 @@ contextBridge.exposeInMainWorld('electron', {
 
   // ── External links ────────────────────────────────
   openExternal: (url: string) => ipcRenderer.send('open-external', url),
+
+  tray: {
+    update: (taskName?: string, elapsed?: string) => ipcRenderer.send('tray:update', taskName, elapsed)
+  },
 
   // ── Window controls ───────────────────────────────
   window: {

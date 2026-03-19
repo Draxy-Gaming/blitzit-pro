@@ -161,11 +161,10 @@ app.whenReady().then(() => {
 
     if (compact) {
       const display = screen.getDisplayMatching(mainWindow.getBounds())
-      const { x, y, height } = display.workArea
-      const compactWidth = 380
+      const { x, y } = display.workArea
 
       mainWindow.setResizable(false)
-      mainWindow.setBounds({ x, y, width: compactWidth, height }, true)
+      mainWindow.setBounds({ x, y, width: 380, height: 620 }, true)
     } else {
       const savedBounds = store.get('windowBounds') as {
         x?: number; y?: number; width?: number; height?: number

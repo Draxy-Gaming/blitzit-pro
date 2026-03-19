@@ -383,8 +383,17 @@ export default function TodayPanel() {
           <EmptyState />
         )}
 
-        {/* Blitzit now button — hidden while blitz is already active */}
-        {!isBlitzing && todayTasks.length > 0 && (
+      </div>
+
+      {/* Sticky bottom CTA so Blitz mode is always easy to start */}
+      {!isBlitzing && todayTasks.length > 0 && (
+        <div
+          style={{
+            padding: '0 14px 12px',
+            flexShrink: 0,
+            background: 'linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,0.96) 20%, rgba(20,20,20,1) 100%)'
+          }}
+        >
           <BlitzNowButton
             onClick={() => {
               const firstTask = activeTask ?? todayTasks[0]
@@ -393,8 +402,9 @@ export default function TodayPanel() {
               setPanelMode('blitz')
             }}
           />
-        )}
-      </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes widgetSlideIn {
           from { transform: translateX(-24px); opacity: 0; }

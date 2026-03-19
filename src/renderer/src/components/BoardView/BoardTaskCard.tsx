@@ -144,7 +144,7 @@ export default function BoardTaskCard({ task, isActive, onContextMenu, onStart }
         )}
 
         {/* Subtasks */}
-        {task.subtasks.length > 0 && !isDone && (
+        {!isDone && (
           <div style={{ marginBottom: 5 }} onClick={(e) => e.stopPropagation()}>
             <SubtaskList task={task} />
           </div>

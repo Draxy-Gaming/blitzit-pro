@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from './jsonStore'
@@ -158,13 +158,28 @@ app.whenReady().then(() => {
 
   ipcMain.handle('window:setCompact', (_e, compact: boolean) => {
     if (!mainWindow) return
+
     if (compact) {
-      mainWindow.setSize(380, 620, true)
+      const display = screen.getDisplayMatching(mainWindow.getBounds())
+      const { x, y, height } = display.workArea
+      const compactWidth = 380
+
       mainWindow.setResizable(false)
+      mainWindow.setBounds({ x, y, width: compactWidth, height }, true)
     } else {
-      mainWindow.setSize(1100, 720, true)
+      const savedBounds = store.get('windowBounds') as {
+        x?: number; y?: number; width?: number; height?: number
+      } | undefined
+
       mainWindow.setResizable(true)
+      mainWindow.setBounds({
+        x: savedBounds?.x,
+        y: savedBounds?.y,
+        width: savedBounds?.width ?? 1100,
+        height: savedBounds?.height ?? 720
+      }, true)
     }
+
     store.set('compactMode', compact)
   })
   ipcMain.handle('window:getCompact', () => store.get('compactMode', false))

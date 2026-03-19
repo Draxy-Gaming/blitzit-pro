@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../../store'
 import type { TimerSession, Task } from '../../types'
+import { isMacOS } from '../../utils/platform'
 
 type Range = '7d' | '30d' | '90d'
 type Granularity = 'daily' | 'weekly' | 'monthly'
@@ -162,7 +163,7 @@ export default function ReportsView() {
     <div style={{ width:'100%', height:'100%', background:'#111', display:'flex', flexDirection:'column', overflow:'hidden' }}>
       {/* Titlebar */}
       <div className="titlebar-drag" style={{ height:44, background:'#141414', display:'flex', alignItems:'center', padding:'0 16px', gap:10, borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
-        {process.platform === 'darwin' && <div style={{ width:52 }}/>}
+        {isMacOS && <div style={{ width:52 }}/>}
         <button
           className="titlebar-no-drag"
           onClick={() => setView('home')}

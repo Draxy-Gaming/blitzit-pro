@@ -7,6 +7,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { useStore, selectActiveLists } from '../../store'
 import { useWindowControls } from '../../hooks/useWindow'
+import { isMacOS } from '../../utils/platform'
 import BlitzMode from '../BlitzMode'
 import BoardColumn from './BoardColumn'
 import BoardTaskCard from './BoardTaskCard'
@@ -144,7 +145,7 @@ export default function BoardView() {
         }}
       >
         {/* macOS traffic lights space */}
-        {process.platform === 'darwin' && <div style={{ width: 52 }} />}
+        {isMacOS && <div style={{ width: 52 }} />}
 
         {/* Back button */}
         <button

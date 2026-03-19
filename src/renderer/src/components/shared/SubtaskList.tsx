@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import type { Task, Subtask } from '../../types'
 
@@ -11,10 +11,11 @@ export default function SubtaskList({ task, defaultOpen = false }: Props) {
   const [open, setOpen] = useState(defaultOpen)
   const [addingNew, setAddingNew] = useState(false)
   const [newTitle, setNewTitle] = useState('')
-  const { toggleSubtask, addSubtask } = useStore()
+  const { toggleSubtask, addSubtask, updateSubtask, moveSubtask, deleteSubtask } = useStore()
 
   const done = task.subtasks.filter((s) => s.completed).length
   const total = task.subtasks.length
+  const label = useMemo(() => `${done}/${total} ${total === 1 ? 'Subtask' : 'Subtasks'}`, [done, total])
 
   const handleAdd = () => {
     const trimmed = newTitle.trim()
@@ -44,9 +45,7 @@ export default function SubtaskList({ task, defaultOpen = false }: Props) {
         {/* Circle progress indicator */}
         <SubtaskCircle done={done} total={total} />
 
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-          {done}/{total} Subtasks
-        </span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
 
         {/* Add subtask button */}
         <button
@@ -93,11 +92,17 @@ export default function SubtaskList({ task, defaultOpen = false }: Props) {
             paddingLeft: 4
           }}
         >
-          {task.subtasks.map((sub) => (
+          {task.subtasks.map((sub, index) => (
             <SubtaskRow
               key={sub.id}
               subtask={sub}
               onToggle={() => toggleSubtask(task.id, sub.id)}
+              onUpdate={(title) => updateSubtask(task.id, sub.id, title)}
+              onMoveUp={() => moveSubtask(task.id, sub.id, 'up')}
+              onMoveDown={() => moveSubtask(task.id, sub.id, 'down')}
+              onDelete={() => deleteSubtask(task.id, sub.id)}
+              canMoveUp={index > 0}
+              canMoveDown={index < task.subtasks.length - 1}
             />
           ))}
 
@@ -141,23 +146,47 @@ export default function SubtaskList({ task, defaultOpen = false }: Props) {
   )
 }
 
-function SubtaskRow({ subtask, onToggle }: { subtask: Subtask; onToggle: () => void }) {
+function SubtaskRow({
+  subtask,
+  onToggle,
+  onUpdate,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+  canMoveUp,
+  canMoveDown
+}: {
+  subtask: Subtask
+  onToggle: () => void
+  onUpdate: (title: string) => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onDelete: () => void
+  canMoveUp: boolean
+  canMoveDown: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draftTitle, setDraftTitle] = useState(subtask.title)
+
+  const submitEdit = () => {
+    const trimmed = draftTitle.trim()
+    if (trimmed && trimmed !== subtask.title) onUpdate(trimmed)
+    setDraftTitle(trimmed || subtask.title)
+    setEditing(false)
+  }
+
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        cursor: 'pointer',
         padding: '1px 0'
       }}
-      onClick={(e) => {
-        e.stopPropagation()
-        onToggle()
-      }}
+      onClick={(e) => e.stopPropagation()}
     >
-      {/* Checkbox */}
-      <div
+      <button
+        title={subtask.completed ? 'Mark subtask incomplete' : 'Mark subtask complete'}
         style={{
           width: 14,
           height: 14,
@@ -170,27 +199,105 @@ function SubtaskRow({ subtask, onToggle }: { subtask: Subtask; onToggle: () => v
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          transition: 'all 150ms ease'
+          transition: 'all 150ms ease',
+          cursor: 'pointer'
         }}
+        onClick={onToggle}
       >
         {subtask.completed && (
           <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
             <path d="M1 4L3 6L7 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
-      </div>
+      </button>
 
-      <span
-        style={{
-          fontSize: 12,
-          color: subtask.completed ? 'var(--text-tertiary)' : 'var(--text-secondary)',
-          textDecoration: subtask.completed ? 'line-through' : 'none',
-          transition: 'all 150ms ease'
-        }}
-      >
-        {subtask.title}
-      </span>
+      {editing ? (
+        <input
+          autoFocus
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          onBlur={submitEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submitEdit()
+            if (e.key === 'Escape') {
+              setDraftTitle(subtask.title)
+              setEditing(false)
+            }
+          }}
+          style={{
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontSize: 12,
+            color: 'var(--text-primary)',
+            padding: 0
+          }}
+        />
+      ) : (
+        <button
+          title="Edit subtask"
+          onClick={() => setEditing(true)}
+          style={{
+            flex: 1,
+            textAlign: 'left',
+            fontSize: 12,
+            color: subtask.completed ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+            textDecoration: subtask.completed ? 'line-through' : 'none',
+            transition: 'all 150ms ease',
+            cursor: 'text'
+          }}
+        >
+          {subtask.title}
+        </button>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <MiniIconButton title="Move subtask up" disabled={!canMoveUp} onClick={onMoveUp}>
+          ↑
+        </MiniIconButton>
+        <MiniIconButton title="Move subtask down" disabled={!canMoveDown} onClick={onMoveDown}>
+          ↓
+        </MiniIconButton>
+        <MiniIconButton title="Delete subtask" danger onClick={onDelete}>
+          ✕
+        </MiniIconButton>
+      </div>
     </div>
+  )
+}
+
+function MiniIconButton({
+  children,
+  onClick,
+  title,
+  danger = false,
+  disabled = false
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  title?: string
+  danger?: boolean
+  disabled?: boolean
+}) {
+  return (
+    <button
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        width: 18,
+        height: 18,
+        borderRadius: 4,
+        fontSize: 10,
+        color: disabled ? '#444' : danger ? '#ef4444' : 'var(--text-tertiary)',
+        opacity: disabled ? 0.35 : 1,
+        cursor: disabled ? 'default' : 'pointer',
+        transition: 'background 150ms ease'
+      }}
+    >
+      {children}
+    </button>
   )
 }
 

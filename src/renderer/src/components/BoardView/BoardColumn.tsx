@@ -17,6 +17,8 @@ interface Props {
   onContextMenu: (task: Task, x: number, y: number) => void
   onBlitzNow?: () => void
   showBlitzBtn?: boolean
+  canBlitz?: boolean
+  blitzLabel?: string
 }
 
 const COLUMN_ACCENT: Record<TaskStatus, string> = {
@@ -34,7 +36,7 @@ const TITLE_COLOR: Record<TaskStatus, string> = {
 
 export default function BoardColumn({
   status, label, tasks, doneTasks = [],
-  activeTaskId, onCardStart, onContextMenu, onBlitzNow, showBlitzBtn
+  activeTaskId, onCardStart, onContextMenu, onBlitzNow, showBlitzBtn, canBlitz = false, blitzLabel = 'Blitzit now'
 }: Props) {
   const { addTask, activeListId, lists, setCreateListOpen } = useStore()
   const [addingTask, setAddingTask] = useState(false)
@@ -298,9 +300,9 @@ export default function BoardColumn({
       </div>
 
       {/* Blitzit now button — Today column only */}
-      {isTodayCol && showBlitzBtn && tasks.length > 0 && onBlitzNow && (
+      {isTodayCol && showBlitzBtn && canBlitz && onBlitzNow && (
         <div style={{ padding: '6px 8px 8px', flexShrink: 0 }}>
-          <BlitzNowButton onClick={onBlitzNow} />
+          <BlitzNowButton onClick={onBlitzNow} label={blitzLabel} />
         </div>
       )}
     </div>

@@ -1,0 +1,12 @@
+{
+  "name": "Blitzit Dev",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "postCreateCommand": "npm install && bash scripts/setup-linux.sh",
+  "forwardPorts": [5173],
+  "remoteEnv": {
+    "DISPLAY": ":99"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  }
+}

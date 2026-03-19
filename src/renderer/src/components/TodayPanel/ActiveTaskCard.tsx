@@ -82,11 +82,9 @@ export default function ActiveTaskCard({ task, onPause, onDone }: Props) {
         </div>
 
         {/* Subtasks */}
-        {task.subtasks.length > 0 && (
-          <div onClick={(e) => e.stopPropagation()}>
-            <SubtaskList task={task} />
-          </div>
-        )}
+        <div onClick={(e) => e.stopPropagation()}>
+          <SubtaskList task={task} defaultOpen={task.subtasks.length > 0} />
+        </div>
 
         {/* Pause hint */}
         <div

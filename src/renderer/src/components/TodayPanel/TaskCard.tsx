@@ -135,14 +135,12 @@ export default function TaskCard({ task, index, onStart }: Props) {
       </div>
 
       {/* Subtasks */}
-      {task.subtasks.length > 0 && (
-        <div
-          style={{ marginLeft: 22, marginTop: 4 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <SubtaskList task={task} />
-        </div>
-      )}
+      <div
+        style={{ marginLeft: 22, marginTop: 4 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SubtaskList task={task} />
+      </div>
 
       {/* Hover action buttons */}
       {hovered && (

@@ -109,7 +109,9 @@ export default function BoardView() {
   const handleBlitzStart = () => {
     const first = tasksByStatus.today[0] ?? tasksByStatus['this-week'][0]
     if (!first) return
+
     startBlitz(first.id)
+    setView('today')
   }
 
   // Board task count for header

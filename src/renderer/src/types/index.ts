@@ -158,6 +158,8 @@ export interface AppState {
   // Actions — subtasks
   addSubtask: (taskId: string, title: string) => void
   toggleSubtask: (taskId: string, subtaskId: string) => void
+  updateSubtask: (taskId: string, subtaskId: string, title: string) => void
+  moveSubtask: (taskId: string, subtaskId: string, direction: 'up' | 'down') => void
   deleteSubtask: (taskId: string, subtaskId: string) => void
 
   // Actions — lists

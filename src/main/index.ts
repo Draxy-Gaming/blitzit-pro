@@ -14,6 +14,7 @@ if (process.platform === 'win32') {
 }
 
 let mainWindow: BrowserWindow | null = null
+const shouldOpenDevTools = is.dev || process.env['BLITZIT_OPEN_DEVTOOLS'] === '1'
 
 function createMainWindow(): BrowserWindow {
   const savedBounds = store.get('windowBounds') as {
@@ -72,6 +73,20 @@ function createMainWindow(): BrowserWindow {
     setTimeout(() => win.webContents.reload(), 500)
   })
 
+  win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    const levels = ['debug', 'info', 'warn', 'error']
+    const label = levels[level] ?? `level-${level}`
+    console.error(`[renderer:${label}] ${message} (${sourceId}:${line})`)
+  })
+
+  win.webContents.on('render-process-gone', (_event, details) => {
+    console.error('Renderer process gone:', details)
+  })
+
+  win.on('unresponsive', () => {
+    console.error('Main window became unresponsive')
+  })
+
   win.webContents.on('crashed' as any, () => {
     console.error('Renderer crashed — relaunching')
     win.webContents.reload()
@@ -94,6 +109,10 @@ function createMainWindow(): BrowserWindow {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+
+  if (shouldOpenDevTools) {
+    win.webContents.openDevTools({ mode: 'detach' })
   }
 
   return win
@@ -121,6 +140,9 @@ app.whenReady().then(() => {
 
   // ── External links ──
   ipcMain.on('open-external', (_e, url: string) => shell.openExternal(url))
+  ipcMain.on('renderer:error', (_e, payload: unknown) => {
+    console.error('Renderer reported error:', payload)
+  })
 
   // ── Window controls ──
   ipcMain.on('window:minimize', () => mainWindow?.minimize())

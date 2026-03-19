@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useStore, selectActiveLists, selectArchivedLists } from '../../store'
 import ListCard from './ListCard'
 import CreateListModal from './CreateListModal'
+import { isMacOS } from '../../utils/platform'
 
 export default function HomeView() {
   const { tasks, settings, openList, setView, setSearchOpen, setSettingsOpen } = useStore()
@@ -45,7 +46,7 @@ export default function HomeView() {
           flexShrink: 0
         }}
       >
-        {process.platform === 'darwin' && <div style={{ width: 52 }} />}
+        {isMacOS && <div style={{ width: 52 }} />}
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

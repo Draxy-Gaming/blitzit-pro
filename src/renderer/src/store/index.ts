@@ -238,6 +238,37 @@ export const useStore = create<AppState>()(
           )
         })),
 
+      updateSubtask: (taskId, subtaskId, title) =>
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  subtasks: t.subtasks.map((st) => st.id === subtaskId ? { ...st, title } : st),
+                  updatedAt: Date.now()
+                }
+              : t
+          )
+        })),
+
+      moveSubtask: (taskId, subtaskId, direction) =>
+        set((s) => ({
+          tasks: s.tasks.map((t) => {
+            if (t.id !== taskId) return t
+
+            const currentIndex = t.subtasks.findIndex((st) => st.id === subtaskId)
+            if (currentIndex === -1) return t
+
+            const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+            if (nextIndex < 0 || nextIndex >= t.subtasks.length) return t
+
+            const subtasks = [...t.subtasks]
+            ;[subtasks[currentIndex], subtasks[nextIndex]] = [subtasks[nextIndex], subtasks[currentIndex]]
+
+            return { ...t, subtasks, updatedAt: Date.now() }
+          })
+        })),
+
       deleteSubtask: (taskId, subtaskId) =>
         set((s) => ({
           tasks: s.tasks.map((t) =>

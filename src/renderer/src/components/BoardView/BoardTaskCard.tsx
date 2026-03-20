@@ -8,6 +8,8 @@ import SubtaskList from '../shared/SubtaskList'
 import IntegrationBadge from '../shared/IntegrationBadge'
 import type { Task } from '../../types'
 
+const STATUS_ORDER: Task['status'][] = ['backlog', 'this-week', 'today', 'done']
+
 interface Props {
   task: Task
   isActive: boolean
@@ -18,7 +20,7 @@ interface Props {
 export default function BoardTaskCard({ task, isActive, onContextMenu, onStart }: Props) {
   const [hovered, setHovered] = useState(false)
   const [scheduleOpen, setScheduleOpen] = useState(false)
-  const { completeTask } = useStore()
+  const { completeTask, moveTask } = useStore()
   const isDone = task.status === 'done'
 
   const liveSeconds = useTaskTimer(task)
@@ -46,6 +48,9 @@ export default function BoardTaskCard({ task, isActive, onContextMenu, onStart }
         ? `+${formatTime(liveSeconds - (task.estimatedMinutes ?? 0) * 60)}`
         : formatTime(liveSeconds))
     : '0min'
+
+  const canMoveLeft = STATUS_ORDER.indexOf(task.status) > 0
+  const canMoveRight = STATUS_ORDER.indexOf(task.status) < STATUS_ORDER.length - 1
 
   return (
     <div
@@ -144,7 +149,7 @@ export default function BoardTaskCard({ task, isActive, onContextMenu, onStart }
         )}
 
         {/* Subtasks */}
-        {task.subtasks.length > 0 && !isDone && (
+        {!isDone && (
           <div style={{ marginBottom: 5 }} onClick={(e) => e.stopPropagation()}>
             <SubtaskList task={task} />
           </div>
@@ -183,10 +188,22 @@ export default function BoardTaskCard({ task, isActive, onContextMenu, onStart }
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <HoverBtn title="Move left"  onClick={() => {}}>
+            <HoverBtn
+              title="Move left"
+              onClick={() => {
+                if (!canMoveLeft) return
+                moveTask(task.id, STATUS_ORDER[STATUS_ORDER.indexOf(task.status) - 1])
+              }}
+            >
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M6.5 2L3 5.5L6.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </HoverBtn>
-            <HoverBtn title="Move right" onClick={() => {}}>
+            <HoverBtn
+              title="Move right"
+              onClick={() => {
+                if (!canMoveRight) return
+                moveTask(task.id, STATUS_ORDER[STATUS_ORDER.indexOf(task.status) + 1])
+              }}
+            >
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M4.5 2L8 5.5L4.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </HoverBtn>
             <HoverBtn title="Schedule" onClick={(e) => { e.stopPropagation(); setScheduleOpen(true) }}>

@@ -7,10 +7,12 @@ import { useState, useEffect } from 'react'
 export function useWindowControls() {
   const [alwaysOnTop, setAlwaysOnTopState] = useState(false)
   const [compact,     setCompactState]     = useState(false)
+  const [miniWidget,  setMiniWidgetState]  = useState(false)
 
   const refreshState = () => {
     window.electron?.window?.getAlwaysOnTop().then(setAlwaysOnTopState).catch(() => {})
     window.electron?.window?.getCompact().then(setCompactState).catch(() => {})
+    window.electron?.window?.getMiniWidget().then(setMiniWidgetState).catch(() => {})
   }
 
   // Load persisted values on mount
@@ -46,6 +48,10 @@ export function useWindowControls() {
 
   const minimize = () => window.electron?.window?.minimize()
   const close    = () => window.electron?.window?.close()
+  const setMiniWidget = async (value: boolean) => {
+    setMiniWidgetState(value)
+    await window.electron?.window?.setMiniWidget(value).catch(() => {})
+  }
 
   return {
     alwaysOnTop,
@@ -54,6 +60,8 @@ export function useWindowControls() {
     compact,
     toggleCompact,
     setCompact,
+    miniWidget,
+    setMiniWidget,
     refreshState,
     minimize,
     close

@@ -12,6 +12,7 @@ import BlitzMode from '../BlitzMode'
 import BoardColumn from './BoardColumn'
 import BoardTaskCard from './BoardTaskCard'
 import TaskContextMenu from './TaskContextMenu'
+import BlitzNowButton from '../BlitzMode/BlitzNowButton'
 import type { Task, TaskStatus } from '../../types'
 
 interface ContextMenuState { task: Task; x: number; y: number }
@@ -109,8 +110,13 @@ export default function BoardView() {
   const handleBlitzStart = () => {
     const first = tasksByStatus.today[0] ?? tasksByStatus['this-week'][0]
     if (!first) return
+
     startBlitz(first.id)
+    setView('today')
   }
+
+  const canBlitz = tasksByStatus.today.length > 0 || tasksByStatus['this-week'].length > 0
+  const blitzLabel = tasksByStatus.today.length > 0 ? 'Blitzit now' : 'Blitz this week'
 
   // Board task count for header
   const totalPending = filteredTasks.filter((t) => t.status !== 'done').length
@@ -194,6 +200,12 @@ export default function BoardView() {
         <span style={{ fontSize: 12, color: '#555', marginLeft: 4 }}>
           {totalPending > 0 ? `${totalPending} pending · Est: ${estStr}` : 'All clear'}
         </span>
+
+        {canBlitz && (
+          <div className="titlebar-no-drag" style={{ width: 150, marginLeft: 12 }}>
+            <BlitzNowButton onClick={handleBlitzStart} label={blitzLabel} />
+          </div>
+        )}
 
         {/* Right icons */}
         <div className="titlebar-no-drag" style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
@@ -283,6 +295,8 @@ export default function BoardView() {
               onCardStart={(id) => startTimer(id)}
               onContextMenu={(task, x, y) => setContextMenu({ task, x, y })}
               showBlitzBtn={status === 'today'}
+              canBlitz={canBlitz}
+              blitzLabel={blitzLabel}
               onBlitzNow={handleBlitzStart}
             />
           ))}

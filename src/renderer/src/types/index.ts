@@ -158,6 +158,8 @@ export interface AppState {
   // Actions — subtasks
   addSubtask: (taskId: string, title: string) => void
   toggleSubtask: (taskId: string, subtaskId: string) => void
+  updateSubtask: (taskId: string, subtaskId: string, title: string) => void
+  moveSubtask: (taskId: string, subtaskId: string, direction: 'up' | 'down') => void
   deleteSubtask: (taskId: string, subtaskId: string) => void
 
   // Actions — lists
@@ -220,6 +222,8 @@ export interface ElectronAPI {
     getAlwaysOnTop: () => Promise<boolean>
     setCompact:     (v: boolean) => Promise<void>
     getCompact:     () => Promise<boolean>
+    setMiniWidget:  (v: boolean) => Promise<void>
+    getMiniWidget:  () => Promise<boolean>
   }
 }
 

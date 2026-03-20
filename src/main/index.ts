@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from './jsonStore'
@@ -30,9 +30,9 @@ function createMainWindow(): BrowserWindow {
     minHeight: 500,
     show: false,
     autoHideMenuBar: true,
-    // macOS: hide traffic lights area, keep native feel
-    // Windows: keep frame, just hide menu bar
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // Keep a custom draggable title area instead of native chrome so the
+    // compact Blitz widget can read like a real widget rather than a normal app window.
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     backgroundColor: '#141414',
     // Never use frameless on Windows — causes black screen
     frame: true,
@@ -158,16 +158,48 @@ app.whenReady().then(() => {
 
   ipcMain.handle('window:setCompact', (_e, compact: boolean) => {
     if (!mainWindow) return
+
     if (compact) {
-      mainWindow.setSize(380, 620, true)
+      const display = screen.getDisplayMatching(mainWindow.getBounds())
+      const { x, y } = display.workArea
+
       mainWindow.setResizable(false)
+      mainWindow.setBounds({ x, y, width: 380, height: 620 }, true)
     } else {
-      mainWindow.setSize(1100, 720, true)
+      const savedBounds = store.get('windowBounds') as {
+        x?: number; y?: number; width?: number; height?: number
+      } | undefined
+
       mainWindow.setResizable(true)
+      mainWindow.setBounds({
+        x: savedBounds?.x,
+        y: savedBounds?.y,
+        width: savedBounds?.width ?? 1100,
+        height: savedBounds?.height ?? 720
+      }, true)
     }
+
     store.set('compactMode', compact)
   })
   ipcMain.handle('window:getCompact', () => store.get('compactMode', false))
+
+  ipcMain.handle('window:setMiniWidget', (_e, mini: boolean) => {
+    if (!mainWindow) return
+
+    const display = screen.getDisplayMatching(mainWindow.getBounds())
+    const { x, y } = display.workArea
+
+    if (mini) {
+      mainWindow.setResizable(false)
+      mainWindow.setBounds({ x: x + 20, y: y + 20, width: 340, height: 110 }, true)
+    } else if (store.get('compactMode', false)) {
+      mainWindow.setResizable(false)
+      mainWindow.setBounds({ x, y, width: 380, height: 620 }, true)
+    }
+
+    store.set('miniWidgetMode', mini)
+  })
+  ipcMain.handle('window:getMiniWidget', () => store.get('miniWidgetMode', false))
 
   if (store.get('alwaysOnTop', false)) {
     mainWindow.setAlwaysOnTop(true, 'floating')

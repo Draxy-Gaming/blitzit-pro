@@ -8,6 +8,7 @@ import CelebrationScreen from './CelebrationScreen'
 import ScheduledTasksSection from './ScheduledTasksSection'
 import BlitzMode from '../BlitzMode'
 import BlitzNowButton from '../BlitzMode/BlitzNowButton'
+import MiniBlitzWidget from './MiniBlitzWidget'
 import { useWindowControls } from '../../hooks/useWindow'
 import type { Task } from '../../types'
 
@@ -30,7 +31,7 @@ export default function TodayPanel() {
   } = useStore()
 
   const allLists = useStore(selectActiveLists)
-  const { alwaysOnTop, toggleAlwaysOnTop } = useWindowControls()
+  const { alwaysOnTop, toggleAlwaysOnTop, compact, miniWidget, setMiniWidget } = useWindowControls()
 
   const [panelMode, setPanelMode] = useState<PanelMode>('list')
   const [justCompletedTask, setJustCompletedTask] = useState<Task | null>(null)
@@ -125,8 +126,23 @@ export default function TodayPanel() {
   const expandBlitz = () => {
     const currentTaskId = blitz.taskId ?? activeTask?.id
     if (currentTaskId) startBlitz(currentTaskId)
+    setMiniWidget(false)
     if (selectedListId !== 'all') openList(selectedListId)
     else setView('board')
+  }
+
+  const isBlitzing = panelMode === 'blitz' && blitz.active && blitz.taskId
+
+  if (compact && miniWidget && isBlitzing && activeTask) {
+    return (
+      <MiniBlitzWidget
+        task={activeTask}
+        onExpand={() => {
+          setMiniWidget(false)
+          setView('board')
+        }}
+      />
+    )
   }
 
   // ── Render ─────────────────────────────────
@@ -140,8 +156,9 @@ export default function TodayPanel() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        borderRadius: 'var(--radius-xl)',
-        border: '1px solid var(--border)'
+        borderRadius: compact ? 0 : 'var(--radius-xl)',
+        border: '1px solid var(--border)',
+        animation: compact ? 'widgetSlideIn 220ms ease-out' : undefined
       }}
     >
       {/* ── Header ── */}
@@ -322,10 +339,11 @@ export default function TodayPanel() {
         }}
         onClick={() => setShowListDropdown(false)}
       >
-        {/* ── Blitz Mode active ── */}
-        {panelMode === 'blitz' && blitz.active && blitz.taskId ? (
+        {/* ── Compact widget content ── */}
+        {isBlitzing ? (
           <BlitzMode
             initialTaskId={blitz.taskId}
+            showTaskCard
             onExpand={expandBlitz}
             onExit={exitBlitz}
           />
@@ -338,62 +356,75 @@ export default function TodayPanel() {
         ) : panelMode === 'break' ? (
           <BreakCard onDone={handleNextTask} />
         ) : (
-          <>
-            {/* Active task card — shows ControlBar when blitz is off but timer running */}
-            {activeTask && activeTask.status === 'today' && (
-              <ActiveTaskCard
-                task={activeTask}
-                onPause={handlePauseActive}
-                onDone={handleDoneActive}
-              />
-            )}
-
-            {/* Regular task cards */}
-            {todayTasks
-              .filter((t) => t.id !== activeTaskId)
-              .map((task, i) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  index={i + (activeTask ? 2 : 1)}
-                  onStart={() => handleStartTask(task.id)}
-                />
-              ))}
-
-            {/* Add task */}
-            <AddTaskInput
-              listId={selectedListId !== 'all' ? selectedListId : (allLists[0]?.id ?? '')}
+          activeTask && activeTask.status === 'today' && (
+            <ActiveTaskCard
+              task={activeTask}
+              onPause={handlePauseActive}
+              onDone={handleDoneActive}
             />
-
-            {/* Scheduled tasks for today */}
-            <ScheduledTasksSection
-              listId={selectedListId !== 'all' ? selectedListId : 'all'}
-            />
-
-            {/* Done section */}
-            {doneTasks.length > 0 && (
-              <DoneSection tasks={doneTasks} />
-            )}
-
-            {/* Empty state */}
-            {todayTasks.length === 0 && doneTasks.length === 0 && (
-              <EmptyState />
-            )}
-
-            {/* Blitzit now button — fixed at the bottom when there are tasks */}
-            {todayTasks.length > 0 && (
-              <BlitzNowButton
-                onClick={() => {
-                  const firstTask = activeTask ?? todayTasks[0]
-                  if (!firstTask) return
-                  startBlitz(firstTask.id)
-                  setPanelMode('blitz')
-                }}
-              />
-            )}
-          </>
+          )
         )}
+
+        {/* Regular task cards stay visible in the compact widget, even during Blitz */}
+        {todayTasks
+          .filter((t) => t.id !== activeTaskId)
+          .map((task, i) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              index={i + ((activeTask && activeTask.status === 'today') || isBlitzing ? 2 : 1)}
+              onStart={() => handleStartTask(task.id)}
+            />
+          ))}
+
+        {/* Add task */}
+        <AddTaskInput
+          listId={selectedListId !== 'all' ? selectedListId : (allLists[0]?.id ?? '')}
+        />
+
+        {/* Scheduled tasks for today */}
+        <ScheduledTasksSection
+          listId={selectedListId !== 'all' ? selectedListId : 'all'}
+        />
+
+        {/* Done section */}
+        {doneTasks.length > 0 && (
+          <DoneSection tasks={doneTasks} />
+        )}
+
+        {/* Empty state */}
+        {todayTasks.length === 0 && doneTasks.length === 0 && (
+          <EmptyState />
+        )}
+
       </div>
+
+      {/* Sticky bottom CTA so Blitz mode is always easy to start */}
+      {!isBlitzing && todayTasks.length > 0 && (
+        <div
+          style={{
+            padding: '0 14px 12px',
+            flexShrink: 0,
+            background: 'linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,0.96) 20%, rgba(20,20,20,1) 100%)'
+          }}
+        >
+          <BlitzNowButton
+            onClick={() => {
+              const firstTask = activeTask ?? todayTasks[0]
+              if (!firstTask) return
+              startBlitz(firstTask.id)
+              setPanelMode('blitz')
+            }}
+          />
+        </div>
+      )}
+
+      <style>{`
+        @keyframes widgetSlideIn {
+          from { transform: translateX(-24px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -55,5 +55,7 @@ contextBridge.exposeInMainWorld('electron', {
     getAlwaysOnTop:  ()               => ipcRenderer.invoke('window:getAlwaysOnTop'),
     setCompact:      (v: boolean)     => ipcRenderer.invoke('window:setCompact', v),
     getCompact:      ()               => ipcRenderer.invoke('window:getCompact'),
+    setMiniWidget:   (v: boolean)     => ipcRenderer.invoke('window:setMiniWidget', v),
+    getMiniWidget:   ()               => ipcRenderer.invoke('window:getMiniWidget'),
   }
 })

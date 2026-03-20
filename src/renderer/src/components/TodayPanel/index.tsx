@@ -8,6 +8,7 @@ import CelebrationScreen from './CelebrationScreen'
 import ScheduledTasksSection from './ScheduledTasksSection'
 import BlitzMode from '../BlitzMode'
 import BlitzNowButton from '../BlitzMode/BlitzNowButton'
+import MiniBlitzWidget from './MiniBlitzWidget'
 import { useWindowControls } from '../../hooks/useWindow'
 import type { Task } from '../../types'
 
@@ -30,7 +31,7 @@ export default function TodayPanel() {
   } = useStore()
 
   const allLists = useStore(selectActiveLists)
-  const { alwaysOnTop, toggleAlwaysOnTop, compact } = useWindowControls()
+  const { alwaysOnTop, toggleAlwaysOnTop, compact, miniWidget, setMiniWidget } = useWindowControls()
 
   const [panelMode, setPanelMode] = useState<PanelMode>('list')
   const [justCompletedTask, setJustCompletedTask] = useState<Task | null>(null)
@@ -125,11 +126,24 @@ export default function TodayPanel() {
   const expandBlitz = () => {
     const currentTaskId = blitz.taskId ?? activeTask?.id
     if (currentTaskId) startBlitz(currentTaskId)
+    setMiniWidget(false)
     if (selectedListId !== 'all') openList(selectedListId)
     else setView('board')
   }
 
   const isBlitzing = panelMode === 'blitz' && blitz.active && blitz.taskId
+
+  if (compact && miniWidget && isBlitzing && activeTask) {
+    return (
+      <MiniBlitzWidget
+        task={activeTask}
+        onExpand={() => {
+          setMiniWidget(false)
+          setView('board')
+        }}
+      />
+    )
+  }
 
   // ── Render ─────────────────────────────────
 

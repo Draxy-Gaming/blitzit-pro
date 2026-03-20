@@ -12,7 +12,7 @@ import { useKeyboard } from './hooks/useKeyboard'
 import { useActiveTask, useTraySync } from './hooks/useTimer'
 
 export default function App() {
-  const { settings, view, searchOpen, settingsOpen } = useStore()
+  const { settings, view, searchOpen, settingsOpen, blitz } = useStore()
   const [onboarded, setOnboarded] = useState(() => {
     try { return localStorage.getItem('blitzit-onboarded') === '1' } catch { return false }
   })
@@ -38,8 +38,9 @@ export default function App() {
 
     window.electron?.window?.setCompact(compact).catch(() => {})
     window.electron?.window?.setAlwaysOnTop(compact).catch(() => {})
+    window.electron?.window?.setMiniWidget(compact && blitz.active).catch(() => {})
     window.dispatchEvent(new Event('blitzit:window-sync'))
-  }, [onboarded, view])
+  }, [onboarded, view, blitz.active])
 
   const finishOnboarding = () => {
     try { localStorage.setItem('blitzit-onboarded', '1') } catch {}

@@ -222,6 +222,8 @@ export interface ElectronAPI {
     getAlwaysOnTop: () => Promise<boolean>
     setCompact:     (v: boolean) => Promise<void>
     getCompact:     () => Promise<boolean>
+    setMiniWidget:  (v: boolean) => Promise<void>
+    getMiniWidget:  () => Promise<boolean>
   }
 }
 
